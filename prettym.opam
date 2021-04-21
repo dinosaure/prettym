@@ -25,4 +25,5 @@ depends: [
   "ptime"            {with-test}
   "alcotest"         {with-test}
   "jsonm"            {with-test}
+  "base64"           {with-test}
 ]
