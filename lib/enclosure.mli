@@ -9,10 +9,7 @@
    XXX(dinosaure): Faraday's cage is an enclosure. *)
 
 module Buffer : sig
-  type t =
-    | Bigstring of Bigstringaf.t
-    | String of string
-    | Bytes of bytes
+  type t = Bigstring of Bigstringaf.t | String of string | Bytes of bytes
 
   val weight : t -> int
   (** Weight of {!t}. *)
@@ -23,7 +20,7 @@ module Buffer : sig
 end
 
 module IOVec : sig
-  type t = {buffer: Buffer.t; off: int; len: int}
+  type t = { buffer : Buffer.t; off : int; len : int }
   (** Type of IOVec. *)
 
   val weight : t -> int
@@ -38,7 +35,7 @@ module IOVec : sig
   val shift : t -> int -> t
   (** [shift t n] shifts [n] bytes on [t]. *)
 
-  val split : t -> int -> (t * t)
+  val split : t -> int -> t * t
   (** [split t off] splits [t] at [off] point. *)
 
   val merge : t -> t -> t option
@@ -60,23 +57,27 @@ val schedule_flush : (int -> encoder -> unit) -> encoder -> encoder
    have been successfully completed. If [encoder] has no pending writes, then
    [f] will be called immediately. *)
 
-val schedule_bigstring : encoder -> ?off:int -> ?len:int -> Bigstringaf.t -> encoder
+val schedule_bigstring :
+  encoder -> ?off:int -> ?len:int -> Bigstringaf.t -> encoder
 (** [schedule_bigstring t ?off ?len a] stores a pointer to [a] into the
    serializer's internal queue. *)
 
-val kschedule_bigstring : (encoder -> 'r) -> encoder -> ?off:int -> ?len:int -> Bigstringaf.t -> 'r
+val kschedule_bigstring :
+  (encoder -> 'r) -> encoder -> ?off:int -> ?len:int -> Bigstringaf.t -> 'r
 (** [kschedule_bigstring k t ?off ?len a]: [k]ontinuation-style of {!schedule_bigstring}. *)
 
 val schedule_string : encoder -> ?off:int -> ?len:int -> string -> encoder
 (** Same as {!schedule_bigstring} but for [String.t]. *)
 
-val kschedule_string : (encoder -> 'r) -> encoder -> ?off:int -> ?len:int -> String.t -> 'r
+val kschedule_string :
+  (encoder -> 'r) -> encoder -> ?off:int -> ?len:int -> String.t -> 'r
 (** [kschedule_string k t ?off ?len a]: [k]ontinuation-style of {!schedule_string}. *)
 
 val schedule_bytes : encoder -> ?off:int -> ?len:int -> bytes -> encoder
 (** Same as {!schedule_bigstring} but for [Bytes.t]. *)
 
-val kschedule_bytes : (encoder -> 'r) -> encoder -> ?off:int -> ?len:int -> Bytes.t -> 'r
+val kschedule_bytes :
+  (encoder -> 'r) -> encoder -> ?off:int -> ?len:int -> Bytes.t -> 'r
 (** [kschedule_bytes k t ?off ?len a]: [k]ontinuation-style of {!schedule_bytes}. *)
 
 val write_char : char -> encoder -> encoder
@@ -86,7 +87,8 @@ val write_string : ?off:int -> ?len:int -> string -> encoder -> encoder
 (** [write_string ?off ?len x t] copies [x] into the serializer's internal
    buffer. *)
 
-val write_bigstring : ?off:int -> ?len:int -> Bigstringaf.t -> encoder -> encoder
+val write_bigstring :
+  ?off:int -> ?len:int -> Bigstringaf.t -> encoder -> encoder
 (** Same as {!write_string} but for {!bigstring}. *)
 
 val write_bytes : ?off:int -> ?len:int -> bytes -> encoder -> encoder
