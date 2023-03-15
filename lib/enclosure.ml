@@ -3,7 +3,7 @@
 module type V = sig
   type t
 
-  val pp : t Fmt.t
+  val pp : Format.formatter -> t -> unit
   val sentinel : t
   val weight : t -> int
   val merge : t -> t -> t option
@@ -30,6 +30,14 @@ module RBQ (V : V) = struct
     let q, capacity = Queue.create ~capacity Bigarray.Int in
     { a = Array.make capacity V.sentinel; c = 0; m = capacity; q }
 
+  let pp_array pp_elt ppf arr =
+    Format.fprintf ppf "[";
+    for i = 0 to Array.length arr - 1 do
+      Format.fprintf ppf "@[%a@]" pp_elt arr.(i);
+      if i + 1 < Array.length arr then Format.fprintf ppf ";@ "
+    done;
+    Format.fprintf ppf "]"
+
   let pp ppf t =
     let a = Array.make (Queue.length t.q) V.sentinel in
     let x = ref 0 in
@@ -38,9 +46,10 @@ module RBQ (V : V) = struct
         a.(!x) <- t.a.(i);
         incr x)
       t.q;
-    Fmt.pf ppf "{ @[<hov>a = %a;@ c = %d;@ m = %d;@ q = %a;@] }"
-      Fmt.(Dump.array V.pp)
-      a t.c t.m (Queue.dump Fmt.int) t.q
+    Format.fprintf ppf "{ @[<hov>a = %a;@ c = %d;@ m = %d;@ q = %a;@] }"
+      (pp_array V.pp) a t.c t.m
+      (Queue.dump Format.pp_print_int)
+      t.q
 
   let available t = Queue.available t.q
   let is_empty t = Queue.is_empty t.q
@@ -77,33 +86,39 @@ module RBQ (V : V) = struct
     !res
 end
 
-let pp_chr =
-  Fmt.using (function '\032' .. '\126' as x -> x | _ -> '.') Fmt.char
+let pp_chr ppf = function
+  | '\032' .. '\126' as chr -> Format.pp_print_char ppf chr
+  | _ -> Format.pp_print_char ppf '.'
 
 let pp_scalar :
     type buffer.
-    get:(buffer -> int -> char) -> length:(buffer -> int) -> buffer Fmt.t =
+    get:(buffer -> int -> char) ->
+    length:(buffer -> int) ->
+    Format.formatter ->
+    buffer ->
+    unit =
  fun ~get ~length ppf b ->
   let l = length b in
   for i = 0 to l / 16 do
-    Fmt.pf ppf "%08x: " (i * 16);
+    Format.fprintf ppf "%08x: " (i * 16);
     let j = ref 0 in
     while !j < 16 do
       if (i * 16) + !j < l then
-        Fmt.pf ppf "%02x" (Char.code @@ get b ((i * 16) + !j))
-      else Fmt.pf ppf "  ";
-      if !j mod 2 <> 0 then Fmt.pf ppf " ";
+        Format.fprintf ppf "%02x" (Char.code @@ get b ((i * 16) + !j))
+      else Format.fprintf ppf "  ";
+      if !j mod 2 <> 0 then Format.fprintf ppf " ";
       incr j
     done;
-    Fmt.pf ppf "  ";
+    Format.fprintf ppf "  ";
     j := 0;
     while !j < 16 do
-      if (i * 16) + !j < l then Fmt.pf ppf "%a" pp_chr (get b ((i * 16) + !j))
-      else Fmt.pf ppf " ";
+      if (i * 16) + !j < l then
+        Format.fprintf ppf "%a" pp_chr (get b ((i * 16) + !j))
+      else Format.fprintf ppf " ";
       incr j
     done;
 
-    Fmt.pf ppf "@,"
+    Format.fprintf ppf "@,"
   done
 
 module RBA = Ke.Fke.Weighted
@@ -135,8 +150,8 @@ module IOVec = struct
   let weight { len; _ } = len
 
   let pp ppf t =
-    Fmt.pf ppf "{ @[<hov>buffer= @[<hov>%a@];@ off= %d;@ len= %d;@] }" Buffer.pp
-      t.buffer t.off t.len
+    Format.fprintf ppf "{ @[<hov>buffer= @[<hov>%a@];@ off= %d;@ len= %d;@] }"
+      Buffer.pp t.buffer t.off t.len
 
   let sentinel =
     let deadbeef = "\222\173\190\239" in
@@ -184,10 +199,10 @@ type encoder = {
   emitter : emitter;
 }
 
-let pp_flush ppf _ = Fmt.string ppf "#flush"
+let pp_flush ppf _ = Format.fprintf ppf "#flush"
 
 let pp ppf t =
-  Fmt.pf ppf
+  Format.fprintf ppf
     "{ @[<hov>sched= @[<hov>%a@];@ write= @[<hov>%a@];@ flush= @[<hov>%a@];@ \
      written= %d;@ received= %d;@ emitter= #emitter;@] }"
     RBS.pp t.sched (RBA.pp pp_chr) t.write (Ke.Fke.pp pp_flush) t.flush
@@ -252,8 +267,8 @@ let shift_buffers written t =
               sched = RBS.cons_exn shifted rest;
               write =
                 (if check iovec t then
-                 RBA.N.shift_exn t.write (IOVec.length last)
-                else t.write);
+                   RBA.N.shift_exn t.write (IOVec.length last)
+                 else t.write);
             } )
         else (List.rev acc, t)
     | exception RBS.Queue.Empty -> (List.rev acc, t)

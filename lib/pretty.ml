@@ -1,22 +1,21 @@
-[@@@warning "-32"] (* pretty-printers *)
+let pp_list ?sep:(pp_sep = Format.pp_print_cut) pp_elt ppf lst =
+  let rec go = function
+    | [] -> ()
+    | [ x ] -> pp_elt ppf x
+    | x :: r ->
+        pp_elt ppf x;
+        pp_sep ppf ();
+        go r
+  in
+  go lst
 
 type vec = { off : int; len : int }
 type box = Box | TBox of int | BBox
-
-let pp_box ppf = function
-  | Box -> Fmt.string ppf "box"
-  | TBox tab -> Fmt.pf ppf "(TBox %d)" tab
-  | BBox -> Fmt.string ppf "bbox"
 
 type value =
   | String of vec * string
   | Bytes of vec * bytes
   | Bigstring of vec * Bigstringaf.t
-
-let pp_value ppf = function
-  | String (vec, v) -> Fmt.pf ppf "%S" (String.sub v vec.off vec.len)
-  | Bytes (vec, v) -> Fmt.pf ppf "%S" (Bytes.sub_string v vec.off vec.len)
-  | Bigstring _ -> Fmt.pf ppf "#bigstring"
 
 let split_value len x =
   assert (len > 0);
@@ -46,14 +45,6 @@ type atom =
   | New_line
   | Open of box
   | Close
-
-let pp_atom ppf = function
-  | Breakable v -> Fmt.pf ppf "<breakable:%a>" pp_value v
-  | Unbreakable v -> Fmt.pf ppf "<unbreakable:%a>" pp_value v
-  | Break { len; indent } -> Fmt.pf ppf "<break:len= %d, indent= %d>" len indent
-  | New_line -> Fmt.pf ppf "<new-line>"
-  | Open box -> Fmt.pf ppf "(box %a" pp_box box
-  | Close -> Fmt.pf ppf ")"
 
 let box = Box
 let tbox indent = TBox indent
@@ -113,7 +104,7 @@ module Stack : sig
   val fold : ('a -> 'b -> 'a) -> 'a -> 'b t -> 'a
   val tail_exn : 'a t -> 'a t
   val map : ('a -> 'b) -> 'a t -> 'b t
-  val pp : 'a Fmt.t -> 'a t Fmt.t
+  val pp : (Format.formatter -> 'a -> unit) -> Format.formatter -> 'a t -> unit
 end = struct
   type 'a t = 'a list
 
@@ -127,7 +118,7 @@ end = struct
   let fold = List.fold_left
   let tail_exn = function _ :: r -> r | [] -> raise Empty
   let map f l = List.map f l
-  let pp = Fmt.Dump.list
+  let pp pp_elt = pp_list pp_elt
 end
 
 module Queue = Ke.Fke
@@ -144,33 +135,34 @@ type t = {
 }
 
 let pp_box ppf = function
-  | `Root -> Fmt.string ppf "`Root"
-  | `Box -> Fmt.string ppf "`Box"
-  | `Indent n -> Fmt.pf ppf "(`Indent %d)" n
+  | `Root -> Format.pp_print_string ppf "`Root"
+  | `Box -> Format.pp_print_string ppf "`Box"
+  | `Indent n -> Format.fprintf ppf "(`Indent %d)" n
 
-let pp_break ppf (`Indent n) = Fmt.pf ppf "(`Indent %d)" n
+let pp_break ppf (`Indent n) = Format.fprintf ppf "(`Indent %d)" n
 
 let pp_token ppf = function
-  | TValue (String ({ off; len }, x)) -> Fmt.pf ppf "%S" (String.sub x off len)
+  | TValue (String ({ off; len }, x)) ->
+      Format.fprintf ppf "%S" (String.sub x off len)
   | TValue (Bytes ({ off; len }, x)) ->
-      Fmt.pf ppf "%S" (Bytes.sub_string x off len)
+      Format.fprintf ppf "%S" (Bytes.sub_string x off len)
   | TValue (Bigstring ({ off; len }, x)) ->
-      Fmt.pf ppf "%S" (Bigstringaf.substring x ~off ~len)
-  | TBreak len -> Fmt.pf ppf "<%S>" (String.make len ' ')
-  | TBox `Box -> Fmt.pf ppf "["
-  | TBox (`Indent n) -> Fmt.pf ppf "[<%d>" n
-  | TBox `Root -> Fmt.pf ppf "[<root>"
-  | TClose -> Fmt.pf ppf "]"
+      Format.fprintf ppf "%S" (Bigstringaf.substring x ~off ~len)
+  | TBreak len -> Format.fprintf ppf "<%S>" (String.make len ' ')
+  | TBox `Box -> Format.fprintf ppf "["
+  | TBox (`Indent n) -> Format.fprintf ppf "[<%d>" n
+  | TBox `Root -> Format.fprintf ppf "[<root>"
+  | TClose -> Format.fprintf ppf "]"
 
 let pp ppf t =
-  Fmt.pf ppf
+  Format.fprintf ppf
     "{ @[<hov>boxes= @[<hov>%a@];@ breaks= @[<hov>%a@];@ inner= @[<hov>%a@];@ \
      indent= %d;@ margin= %d;@ new_line= %S;@ queue= @[<hov>%a@];@ encoder= \
      @[<hov>%a@];@] }"
     (Stack.pp pp_box) t.boxes
-    (Stack.pp (Fmt.Dump.list pp_break))
+    (Stack.pp (pp_list pp_break))
     t.breaks
-    (Stack.pp Fmt.(Dump.list int))
+    (Stack.pp (pp_list Format.pp_print_int))
     t.inner t.indent t.margin t.new_line (Queue.pp pp_token) t.queue
     Enclosure.pp t.encoder
 
