@@ -32,8 +32,7 @@ let to_string ?(margin = 78) ?(new_line = "\r\n") gen value =
   in
   let encoder = Pretty.create ~emitter ~margin ~new_line 0x100 in
   let kend encoder =
-    if Pretty.is_empty encoder then ()
-    else Fmt.failwith "Leave a non-empty encoder"
+    if Pretty.is_empty encoder then () else failwith "Leave a non-empty encoder"
   in
   let encoder = eval encoder Fancy.[ !!gen ] value in
   let () = Pretty.kflush kend encoder in
@@ -70,7 +69,7 @@ let to_stream ?(margin = 78) ?(new_line = "\r\n") gen value =
   let encoder = Pretty.create ~emitter ~margin ~new_line 4096 in
   let kend encoder =
     if Pretty.is_empty encoder then ()
-    else Fmt.failwith "Leave with a non-empty encoder"
+    else failwith "Leave with a non-empty encoder"
   in
   let () = keval (Pretty.kflush kend) encoder Fancy.[ !!gen ] value in
   consumer

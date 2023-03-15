@@ -49,7 +49,7 @@ val is_empty : encoder -> bool
 (** [is_empty t] returns [true] if nothing is under [t]. This case appear
    afterwards a {!flush}. *)
 
-val pp : encoder Fmt.t
+val pp : Format.formatter -> encoder -> unit
 (** Pretty-printer of {!encoder}. *)
 
 val schedule_flush : (int -> encoder -> unit) -> encoder -> encoder
