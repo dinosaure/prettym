@@ -65,7 +65,7 @@ let bytes : Bytes.t t =
   let atom = Pretty.bytes ~breakable:false x in
   Pretty.push atom t
 
-let bigstring : Bigstringaf.t t =
+let bigstring : Bstr.t t =
  fun t x ->
   let atom = Pretty.bigstring ~breakable:false x in
   Pretty.push atom t

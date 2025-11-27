@@ -17,9 +17,7 @@ build: [
 depends: [
   "ocaml"            {>= "4.08.0"}
   "dune"             {>= "2.8"}
-  "bigarray-overlap"
   "ke"               {>= "0.4"}
-  "bigstringaf"      {>= "0.2"}
   "ptime"            {with-test}
   "alcotest"         {with-test}
   "jsonm"            {with-test}

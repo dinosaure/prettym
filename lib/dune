@@ -1,4 +1,4 @@
 (library
  (name prettym)
  (public_name prettym)
- (libraries bigarray-overlap ke bigstringaf))
+ (libraries bstr ke))

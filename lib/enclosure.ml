@@ -124,22 +124,22 @@ let pp_scalar :
 module RBA = Ke.Fke.Weighted
 
 module Buffer = struct
-  type t = Bigstring of Bigstringaf.t | String of string | Bytes of bytes
+  type t = Bigstring of Bstr.t | String of string | Bytes of bytes
 
   let pp ppf = function
     | Bigstring x ->
-        pp_scalar ~length:Bigstringaf.length ~get:Bigstringaf.get ppf x
+        pp_scalar ~length:Bstr.length ~get:Bstr.get ppf x
     | String x -> pp_scalar ~length:String.length ~get:String.get ppf x
     | Bytes x -> pp_scalar ~length:Bytes.length ~get:Bytes.get ppf x
 
   let weight = function
-    | Bigstring x -> Bigstringaf.length x
+    | Bigstring x -> Bstr.length x
     | String x -> String.length x
     | Bytes x -> Bytes.length x
 
   let sub buffer off len =
     match buffer with
-    | Bigstring x -> Bigstring (Bigstringaf.sub x ~off ~len)
+    | Bigstring x -> Bigstring (Bstr.sub x ~off ~len)
     | String x -> String (String.sub x off len)
     | Bytes x -> Bytes (Bytes.sub x off len)
 end
@@ -211,7 +211,7 @@ let pp ppf t =
 let is_empty t = RBS.is_empty t.sched
 
 (* XXX(dinosaure): [sched] is a queue of [IOVec]. [write] is a
-   ring-buffer/[Bigstringaf.t]. [flush] is a queue which can contain
+   ring-buffer/[Bstr.t]. [flush] is a queue which can contain
    user-defined operation at a break point. [written] is how many bytes we
    sended to the user (afterwards a *flush* operation). [received] is how many
    bytes we received from the user.
@@ -222,7 +222,7 @@ let is_empty t = RBS.is_empty t.sched
 
    The complexity is under [sched] where it stores pointer from user but pointer
    from [write] queue too. Indeed, [write_] operations did not do only a [blit]
-   but then they store resulted/*blitted* [Bigstringaf.t] part to [sched].
+   but then they store resulted/*blitted* [Bstr.t] part to [sched].
 
    When we want to shift a part of [encoder], **all** buffers are stored in
    [sched]. So we need to shift [sched]. However, resulted [IOVec] can be
@@ -243,7 +243,7 @@ let check iovec { write; _ } =
   match iovec with
   | { IOVec.buffer = Buffer.Bigstring x; _ } -> (
       let buf = RBA.unsafe_bigarray write in
-      match Overlap.array1 x buf with Some (_, _, _) -> true | None -> false)
+      match Bstr.overlap x buf with Some (_, _, _) -> true | None -> false)
   | _ -> false
 
 let shift_buffers written t =
@@ -330,7 +330,7 @@ let rec schedule k ~length ~buffer ?(off = 0) ?len v t =
   let len = match len with Some len -> len | None -> length v - off in
   match RBS.push t.sched (IOVec.make (buffer v) off len) with
   | Ok sched ->
-      (* TODO: merge [Bigstringaf.t]. *)
+      (* TODO: merge [Bstr.t]. *)
       k { t with sched; received = t.received + len }
   | Error _ ->
       let max = RBS.available t.sched in
@@ -417,16 +417,16 @@ let kwritev k l t =
   go t l
 
 let bigarray_blit_from_string src src_off dst dst_off len =
-  Bigstringaf.blit_from_string src ~src_off dst ~dst_off ~len
+  Bstr.blit_from_string src ~src_off dst ~dst_off ~len
 
 let bigarray_blit_from_bytes src src_off dst dst_off len =
-  Bigstringaf.blit_from_bytes src ~src_off dst ~dst_off ~len
+  Bstr.blit_from_bytes src ~src_off dst ~dst_off ~len
 
 let bigarray_blit src src_off dst dst_off len =
   Bigarray.Array1.(blit (sub src src_off len) (sub dst dst_off len))
 
 let bigarray_blit_to_bytes src src_off dst dst_off len =
-  Bigstringaf.blit_to_bytes src ~src_off dst ~dst_off ~len
+  Bstr.blit_to_bytes src ~src_off dst ~dst_off ~len
 
 let kwrite_string =
   let length = String.length in
@@ -454,7 +454,7 @@ let kwrite_char =
   let blit src src_off dst dst_off len =
     assert (src_off = 0);
     assert (len = 1);
-    Bigstringaf.set dst dst_off src
+    Bstr.set dst dst_off src
   in
   fun k a t -> kwrite k ~length ~blit ~off:0 ~len:1 a t
 
@@ -465,7 +465,7 @@ let kwrite_uint8 =
   let blit src src_off dst dst_off len =
     assert (src_off = 0);
     assert (len = 1);
-    Bigstringaf.set dst dst_off (Char.unsafe_chr src)
+    Bstr.set dst dst_off (Char.unsafe_chr src)
   in
   fun k a t -> kwrite k ~length ~blit ~off:0 ~len:1 a t
 
@@ -481,7 +481,7 @@ module type S = sig
 end
 
 module type ENDIAN = sig
-  type t = Bigstringaf.t
+  type t = Bstr.t
 
   val set_int16 : t -> int -> int -> unit
   val set_int32 : t -> int -> int32 -> unit
@@ -526,19 +526,19 @@ module Make (X : ENDIAN) : S = struct
 end
 
 module LE' = struct
-  type t = Bigstringaf.t
+  type t = Bstr.t
 
-  let set_int16 = Bigstringaf.set_int16_le
-  let set_int32 = Bigstringaf.set_int32_le
-  let set_int64 = Bigstringaf.set_int64_le
+  let set_int16 = Bstr.set_int16_le
+  let set_int32 = Bstr.set_int32_le
+  let set_int64 = Bstr.set_int64_le
 end
 
 module BE' = struct
-  type t = Bigstringaf.t
+  type t = Bstr.t
 
-  let set_int16 = Bigstringaf.set_int16_be
-  let set_int32 = Bigstringaf.set_int32_be
-  let set_int64 = Bigstringaf.set_int64_be
+  let set_int16 = Bstr.set_int16_be
+  let set_int32 = Bstr.set_int32_be
+  let set_int64 = Bstr.set_int64_be
 end
 
 module LE = Make (LE')

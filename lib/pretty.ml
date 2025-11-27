@@ -15,7 +15,7 @@ type box = Box | TBox of int | BBox
 type value =
   | String of vec * string
   | Bytes of vec * bytes
-  | Bigstring of vec * Bigstringaf.t
+  | Bigstring of vec * Bstr.t
 
 let split_value len x =
   assert (len > 0);
@@ -73,7 +73,7 @@ let bytes ?(breakable = false) ?(off = 0) ?len x =
 
 let bigstring ?(breakable = false) ?(off = 0) ?len x =
   let len =
-    match len with Some len -> len | None -> Bigstringaf.length x - off
+    match len with Some len -> len | None -> Bstr.length x - off
   in
   let value = Bigstring ({ off; len }, x) in
   v ~breakable value
@@ -147,7 +147,7 @@ let pp_token ppf = function
   | TValue (Bytes ({ off; len }, x)) ->
       Format.fprintf ppf "%S" (Bytes.sub_string x off len)
   | TValue (Bigstring ({ off; len }, x)) ->
-      Format.fprintf ppf "%S" (Bigstringaf.substring x ~off ~len)
+      Format.fprintf ppf "%S" (Bstr.sub_string x ~off ~len)
   | TBreak len -> Format.fprintf ppf "<%S>" (String.make len ' ')
   | TBox `Box -> Format.fprintf ppf "["
   | TBox (`Indent n) -> Format.fprintf ppf "[<%d>" n

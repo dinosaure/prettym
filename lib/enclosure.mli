@@ -1,5 +1,5 @@
 (** [Enclosure] module follows [Faraday] implementation (thx \@spiros). The main
-   difference is: [Enclosure] uses a bounded internal [Bigstringaf.t] which can
+   difference is: [Enclosure] uses a bounded internal [Bstr.t] which can
    not be grow. Internal queue which contains [IOVec] elements can not grow too.
 
    By this way, we ensure that [encoder] uses a bounded memory area. Where
@@ -9,7 +9,7 @@
    XXX(dinosaure): Faraday's cage is an enclosure. *)
 
 module Buffer : sig
-  type t = Bigstring of Bigstringaf.t | String of string | Bytes of bytes
+  type t = Bigstring of Bstr.t | String of string | Bytes of bytes
 
   val weight : t -> int
   (** Weight of {!t}. *)
@@ -58,12 +58,12 @@ val schedule_flush : (int -> encoder -> unit) -> encoder -> encoder
    [f] will be called immediately. *)
 
 val schedule_bigstring :
-  encoder -> ?off:int -> ?len:int -> Bigstringaf.t -> encoder
+  encoder -> ?off:int -> ?len:int -> Bstr.t -> encoder
 (** [schedule_bigstring t ?off ?len a] stores a pointer to [a] into the
    serializer's internal queue. *)
 
 val kschedule_bigstring :
-  (encoder -> 'r) -> encoder -> ?off:int -> ?len:int -> Bigstringaf.t -> 'r
+  (encoder -> 'r) -> encoder -> ?off:int -> ?len:int -> Bstr.t -> 'r
 (** [kschedule_bigstring k t ?off ?len a]: [k]ontinuation-style of {!schedule_bigstring}. *)
 
 val schedule_string : encoder -> ?off:int -> ?len:int -> string -> encoder
@@ -88,7 +88,7 @@ val write_string : ?off:int -> ?len:int -> string -> encoder -> encoder
    buffer. *)
 
 val write_bigstring :
-  ?off:int -> ?len:int -> Bigstringaf.t -> encoder -> encoder
+  ?off:int -> ?len:int -> Bstr.t -> encoder -> encoder
 (** Same as {!write_string} but for {!bigstring}. *)
 
 val write_bytes : ?off:int -> ?len:int -> bytes -> encoder -> encoder

@@ -11,7 +11,7 @@ val new_line : atom
 val close : atom
 val string : ?breakable:bool -> ?off:int -> ?len:int -> string -> atom
 val bytes : ?breakable:bool -> ?off:int -> ?len:int -> Bytes.t -> atom
-val bigstring : ?breakable:bool -> ?off:int -> ?len:int -> Bigstringaf.t -> atom
+val bigstring : ?breakable:bool -> ?off:int -> ?len:int -> Bstr.t -> atom
 val fws : atom
 val spaces : int -> atom
 val break : len:int -> indent:int -> atom

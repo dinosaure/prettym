@@ -67,7 +67,7 @@ val string : string t
 val bytes : Bytes.t t
 (** [bytes] permits to serialize a [bytes]. *)
 
-val bigstring : Bigstringaf.t t
+val bigstring : Bstr.t t
 (** [bigstring] permits to serialize a {i bigstring}. *)
 
 val breakable : string t
@@ -94,7 +94,7 @@ val keval : (ppf -> 'v) -> ppf -> ('ty, 'v) fmt -> 'ty
 val eval : ppf -> ('ty, ppf) fmt -> 'ty
 
 module Buffer : sig
-  type t = Bigstring of Bigstringaf.t | String of string | Bytes of bytes
+  type t = Bigstring of Bstr.t | String of string | Bytes of bytes
 
   val weight : t -> int
   (** Weight of {!t}. *)
