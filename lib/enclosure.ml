@@ -90,8 +90,7 @@ let pp_chr ppf = function
   | '\032' .. '\126' as chr -> Format.pp_print_char ppf chr
   | _ -> Format.pp_print_char ppf '.'
 
-let pp_scalar :
-    type buffer.
+let pp_scalar : type buffer.
     get:(buffer -> int -> char) ->
     length:(buffer -> int) ->
     Format.formatter ->
@@ -127,8 +126,7 @@ module Buffer = struct
   type t = Bigstring of Bstr.t | String of string | Bytes of bytes
 
   let pp ppf = function
-    | Bigstring x ->
-        pp_scalar ~length:Bstr.length ~get:Bstr.get ppf x
+    | Bigstring x -> pp_scalar ~length:Bstr.length ~get:Bstr.get ppf x
     | String x -> pp_scalar ~length:String.length ~get:String.get ppf x
     | Bytes x -> pp_scalar ~length:Bytes.length ~get:Bytes.get ppf x
 

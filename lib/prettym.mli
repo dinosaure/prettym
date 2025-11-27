@@ -49,8 +49,8 @@ val tbox : int -> ('v, 'v) order
     spaces. *)
 
 val bbox : ('v, 'v) order
-(** [bbox] creates a new box to indent any contents at the current position
-    of the serializer. *)
+(** [bbox] creates a new box to indent any contents at the current position of
+    the serializer. *)
 
 val box : ('v, 'v) order
 
@@ -80,8 +80,8 @@ val char : char t
 (** [char] permits to serialize a [char]. *)
 
 val list : sep:'x t * 'x -> 'v t -> 'v list t
-(** [list ~sep pp] permits to serialize a list of values which can be
-    serialized with [pp]. Between each values, we apply [sep]. *)
+(** [list ~sep pp] permits to serialize a list of values which can be serialized
+    with [pp]. Between each values, we apply [sep]. *)
 
 val option : 'a t -> 'a option t
 
@@ -101,7 +101,7 @@ module Buffer : sig
 
   val sub : t -> int -> int -> t
   (** [sub t off len] does a sub operation of {!t} of [len] bytes starting at
-     [off]. *)
+      [off]. *)
 end
 
 module IOVec : sig
@@ -136,12 +136,12 @@ val create :
     lines and break the line with [new_line] (default to ["\r\n"]).
 
     [emitter] is called when the serializer is full. It gives to user what it
-    needs to transmit to the output and it asks how many bytes the user was
-    able to transmit. *)
+    needs to transmit to the output and it asks how many bytes the user was able
+    to transmit. *)
 
 val is_empty : ppf -> bool
-(** [is_empty ppf] returns [true] if the serializer is empty. Otherwise,
-    it returns [false]. *)
+(** [is_empty ppf] returns [true] if the serializer is empty. Otherwise, it
+    returns [false]. *)
 
 val flush : ppf -> ppf
 (** [flush ppf] enforces the serializer to call the internal [emitter] to

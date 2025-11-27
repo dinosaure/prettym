@@ -72,9 +72,7 @@ let bytes ?(breakable = false) ?(off = 0) ?len x =
   v ~breakable value
 
 let bigstring ?(breakable = false) ?(off = 0) ?len x =
-  let len =
-    match len with Some len -> len | None -> Bstr.length x - off
-  in
+  let len = match len with Some len -> len | None -> Bstr.length x - off in
   let value = Bigstring ({ off; len }, x) in
   v ~breakable value
 
