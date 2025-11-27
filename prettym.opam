@@ -18,6 +18,7 @@ depends: [
   "ocaml"            {>= "4.08.0"}
   "dune"             {>= "2.8"}
   "ke"               {>= "0.4"}
+  "bstr"
   "ptime"            {with-test}
   "alcotest"         {with-test}
   "jsonm"            {with-test}
