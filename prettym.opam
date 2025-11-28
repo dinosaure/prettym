@@ -24,3 +24,4 @@ depends: [
   "jsonm"            {with-test}
   "base64"           {with-test}
 ]
+x-maintenance-intent: [ "(latest)" ]
