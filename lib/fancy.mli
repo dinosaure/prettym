@@ -20,7 +20,7 @@ val close : ('v, 'v) order
 val using : ('b -> 'a) -> 'a t -> 'b t
 val string : string t
 val bytes : Bytes.t t
-val bigstring : Bigstringaf.t t
+val bigstring : Bstr.t t
 val breakable : string t
 val char : char t
 val list : sep:'x t * 'x -> 'v t -> 'v list t

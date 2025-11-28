@@ -24,7 +24,7 @@ let to_string ?(margin = 78) ?(new_line = "\r\n") gen value =
           Buffer.add_subbytes buf x off len;
           a + len
       | { buffer = Bigstring x; off; len } ->
-          let x = Bigstringaf.substring x ~off ~len in
+          let x = Bstr.sub_string x ~off ~len in
           Buffer.add_string buf x;
           a + len
     in
@@ -53,7 +53,7 @@ let to_stream ?(margin = 78) ?(new_line = "\r\n") gen value =
           Buffer.add_subbytes line x off len;
           a + len
       | { buffer = Bigstring x; off; len } ->
-          let x = Bigstringaf.substring x ~off ~len in
+          let x = Bstr.sub_string x ~off ~len in
           Buffer.add_string line x;
           a + len
     in

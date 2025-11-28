@@ -157,7 +157,7 @@ let make v =
           Buffer.add_subbytes buf x off len;
           a + len
       | { buffer = Bigstring x; off; len } ->
-          let x = Bigstringaf.substring x ~off ~len in
+          let x = Bstr.sub_string x ~off ~len in
           Buffer.add_string buf x;
           a + len
     in
