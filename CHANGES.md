@@ -1,3 +1,8 @@
+### 0.0.4 (2025-11-28) Paris - France
+
+- Delete `fmt` dependency (@dinosaure #5)
+- Move to `bstr` (instead of `bigstringaf`) (@dinosaure, #6)
+
 ### 0.0.3 (2022-04-07) Paris - France
 
 - Remove `bigarray-compat` and support only OCaml >= 4.08 (@hannesm, #3)
