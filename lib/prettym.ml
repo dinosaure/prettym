@@ -9,7 +9,7 @@ let is_empty = Pretty.is_empty
 let flush = Pretty.flush
 let kflush = Pretty.kflush
 
-let to_string ?(margin = 78) ?(new_line = "\r\n") gen value =
+let to_string ?(margin = Some 78) ?(new_line = "\r\n") gen value =
   let buf = Buffer.create 0x100 in
 
   let emitter =
@@ -38,7 +38,7 @@ let to_string ?(margin = 78) ?(new_line = "\r\n") gen value =
   let () = Pretty.kflush kend encoder in
   Buffer.contents buf
 
-let to_stream ?(margin = 78) ?(new_line = "\r\n") gen value =
+let to_stream ?(margin = Some 78) ?(new_line = "\r\n") gen value =
   let queue = Queue.create () in
   let line = Buffer.create 4096 in
   let emitter iovecs =
