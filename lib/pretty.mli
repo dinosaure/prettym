@@ -22,4 +22,4 @@ val flush : t -> t
 val is_empty : t -> bool
 
 val create :
-  ?margin:int -> ?new_line:string -> emitter:Enclosure.emitter -> int -> t
+  ?margin:int option -> ?new_line:string -> emitter:Enclosure.emitter -> int -> t

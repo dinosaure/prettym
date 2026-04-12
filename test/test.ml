@@ -164,7 +164,7 @@ let make v =
     List.fold_left write 0
   in
 
-  let encoder = Prettym.create ~emitter ~margin:78 ~new_line:"\n" 0x100 in
+  let encoder = Prettym.create ~emitter ~margin:(Some 78) ~new_line:"\n" 0x100 in
 
   let kend encoder =
     if Prettym.is_empty encoder then ()
@@ -187,7 +187,7 @@ let unroll_box () =
       ]
       k x y
   in
-  let result = Prettym.to_string ~margin:14 g ("AAAAAA", "BBBBBB", "CCCCCC") in
+  let result = Prettym.to_string ~margin:(Some 14) g ("AAAAAA", "BBBBBB", "CCCCCC") in
   Alcotest.(check string) "result" result "AAAAAA:\r\n BBBBBB&CCCCCC\r\n"
 (* XXX(dinosaure): instead to cut at [&], it unroll the [tbox] and print elements to the new line. *)
 
@@ -213,7 +213,7 @@ let lift () =
     eval ppf [ !!(list ~sep:(sep, ()) string) ] lst
   in
   let lst = List.init 500 (fun _ -> random_word 14) in
-  let res = Prettym.to_string ~margin:78 pp lst in
+  let res = Prettym.to_string ~margin:(Some 78) pp lst in
   let check line =
     Alcotest.(check bool) "< 80" (String.length line < 80) true
   in

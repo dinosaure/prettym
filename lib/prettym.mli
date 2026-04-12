@@ -130,7 +130,7 @@ end
 val io_buffer_size : int
 
 val create :
-  ?margin:int -> ?new_line:string -> emitter:(IOVec.t list -> int) -> int -> ppf
+  ?margin:int option -> ?new_line:string -> emitter:(IOVec.t list -> int) -> int -> ppf
 (** [create ?margin ?new_line ~emitter weight] creates a serializer bounded to
     [weight] elements. The serializer is limiter to emit [margin] bytes per
     lines and break the line with [new_line] (default to ["\r\n"]).
@@ -150,12 +150,12 @@ val flush : ppf -> ppf
 val kflush : (ppf -> 'v) -> ppf -> 'v
 (** [kflush] is {!flush} with a [k]ontinuation. *)
 
-val to_string : ?margin:int -> ?new_line:string -> 'a t -> 'a -> string
+val to_string : ?margin:int option -> ?new_line:string -> 'a t -> 'a -> string
 (** [to_string ?margin ?new_line pp v] serializes a value [v] with the
     serializer [pp] into a [string]. *)
 
 val to_stream :
-  ?margin:int -> ?new_line:string -> 'a t -> 'a -> unit -> string option
+  ?margin:int option -> ?new_line:string -> 'a t -> 'a -> unit -> string option
 (** [to_stream ?margin ?new_line pp v] serializes a value [v] with the
     serializer [pp] and it returns a function [unit -> string option] to
     transmit out the result {i chunk by chunk} of the serialization. *)

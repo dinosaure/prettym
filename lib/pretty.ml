@@ -126,7 +126,7 @@ type t = {
   breaks : [ `Indent of int ] list Stack.t;
   inner : int list Stack.t;
   indent : int;
-  margin : int;
+  margin : int option;
   new_line : string;
   queue : token Queue.t;
   encoder : Enclosure.encoder;
@@ -155,13 +155,13 @@ let pp_token ppf = function
 let pp ppf t =
   Format.fprintf ppf
     "{ @[<hov>boxes= @[<hov>%a@];@ breaks= @[<hov>%a@];@ inner= @[<hov>%a@];@ \
-     indent= %d;@ margin= %d;@ new_line= %S;@ queue= @[<hov>%a@];@ encoder= \
+     indent= %d;@ new_line= %S;@ queue= @[<hov>%a@];@ encoder= \
      @[<hov>%a@];@] }"
     (Stack.pp pp_box) t.boxes
     (Stack.pp (pp_list pp_break))
     t.breaks
     (Stack.pp (pp_list Format.pp_print_int))
-    t.inner t.indent t.margin t.new_line (Queue.pp pp_token) t.queue
+    t.inner t.indent t.new_line (Queue.pp pp_token) t.queue
     Enclosure.pp t.encoder
 
 let ( <.> ) f g x = f (g x)
@@ -249,14 +249,20 @@ let unroll_last_box_and_emit k value t =
   emit_line (merge_indents k) { t with queue = q }
 
 let rec kpush_breakable_value ~current_length_of_line k value t =
-  if current_length_of_line >= t.margin then
+  let exceeding0 = match t.margin with
+    | None -> false
+    | Some margin -> current_length_of_line >= margin in
+  let exceeding1 = match t.margin with
+    | None -> false
+    | Some margin -> current_length_of_line + length_of_token (TValue value) > margin in
+  if exceeding0 then
     emit_line (merge_indents (kpush k (Breakable value))) t
-  else if current_length_of_line + length_of_token (TValue value) > t.margin
+  else if exceeding1
   then
     if is_in_box t && not (Queue.is_empty (without_last_box t.queue)) then
       unroll_last_box_and_emit k value t
     else
-      let len = t.margin - current_length_of_line in
+      let len = Stdlib.Option.get t.margin - current_length_of_line in
       let value0, value1 = split_value len value in
       let token0 = TValue value0 in
       let token1 = v ~breakable:true value1 in
@@ -273,8 +279,11 @@ let rec kpush_breakable_value ~current_length_of_line k value t =
       }
 
 and kpush_unbreakable_value ~current_length_of_line k value t =
+  let exceeding = match t.margin with
+    | None -> false
+    | Some margin -> current_length_of_line + length_of_token (TValue value) > margin in
   if
-    current_length_of_line + length_of_token (TValue value) > t.margin
+    exceeding
     && not (Queue.is_empty t.queue)
   then
     if is_in_box t && not (Queue.is_empty (without_last_box t.queue)) then
@@ -356,7 +365,10 @@ and kpush k value t =
         Queue.tail t.queue >>= merge_breaks break
       with
       | Some (queue, len) ->
-          if current_length_of_line + length_of_token (TBreak len) >= t.margin
+          let exceeding = match t.margin with
+            | None -> false
+            | Some margin -> current_length_of_line + length_of_token (TBreak len) >= margin in
+          if exceeding
           then
             emit_line (merge_indents k)
               { t with queue; breaks = append t.breaks (`Indent indent) }
@@ -369,7 +381,10 @@ and kpush k value t =
                 breaks = append t.breaks (`Indent indent);
               }
       | None ->
-          if current_length_of_line + length_of_token (TBreak len) > t.margin
+          let exceeding = match t.margin with
+            | None -> false
+            | Some margin -> current_length_of_line + length_of_token (TBreak len) > margin in
+          if exceeding
           then
             emit_line (merge_indents k)
               { t with breaks = append t.breaks (`Indent indent) }
@@ -407,7 +422,7 @@ let push = kpush identity
 let flush = kflush identity
 let is_empty t = Queue.is_empty t.queue && Enclosure.is_empty t.encoder
 
-let create ?(margin = 998) ?(new_line = "\r\n") ~emitter len =
+let create ?(margin = Some 998) ?(new_line = "\r\n") ~emitter len =
   let encoder = Enclosure.create ~emitter len in
   {
     encoder;
