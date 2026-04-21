@@ -1,3 +1,7 @@
+### 0.0.5 (2026-04-20) Paris - France
+
+- Add the ability to encode value without margin (@dinosaure, #8)
+
 ### 0.0.4 (2025-11-28) Paris - France
 
 - Delete `fmt` dependency (@dinosaure #5)
